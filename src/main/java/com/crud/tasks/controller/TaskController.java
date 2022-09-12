@@ -4,54 +4,48 @@ import com.crud.tasks.domain.Task;
 import com.crud.tasks.domain.TaskDto;
 import com.crud.tasks.mapper.TaskMapper;
 import com.crud.tasks.service.DbService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 @RequestMapping("/v1/tasks")
+@RequiredArgsConstructor
 public class TaskController {
 
     private final DbService service;
     private final TaskMapper taskMapper;
 
-    @Autowired
-    public TaskController(DbService service, TaskMapper taskMapper){
-        this.service = service;
-        this.taskMapper = taskMapper;
-    }
-
     @GetMapping
-    public List<TaskDto> getTasks() {
+    public ResponseEntity<List<TaskDto>> getTasks() {
         List<Task> tasks = service.getAllTasks();
-        return taskMapper.mapToTaskDtoList(tasks);
+        return ResponseEntity.ok(taskMapper.mapToTaskDtoList(tasks));
     }
-
-    /*@GetMapping
-    public TaskDto getTaskById(Long id){
-        Task task = service.getTaskById(id);
-        return taskMapper.mapToTaskDto(task);
-    }*/
 
     @GetMapping(value = "{taskId}")
-    public TaskDto getTask(@PathVariable Long taskId) {
-        Task task = service.getTaskById(taskId);
-        return taskMapper.mapToTaskDto(task);
-        //return new TaskDto(1L, "test title", "test_content");
+    public ResponseEntity<TaskDto> getTask(@PathVariable Long taskId) throws TaskNotFoundException{
+            return ResponseEntity.ok(taskMapper.mapToTaskDto(service.getTask(taskId)));
     }
 
     @DeleteMapping(value = "{taskId}")
-    public void deleteTask(@PathVariable Long taskId) {
-
+    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId){
+        service.deleteTask(taskId);
+        return ResponseEntity.ok().build();
     }
 
-    @PutMapping(value = "{taskId}")
-    public TaskDto updateTask(TaskDto taskDto) {
-        return new TaskDto(1L, "Edited test title", "Test content");
+    @PutMapping
+    public ResponseEntity<TaskDto> updateTask(@RequestBody TaskDto taskDto) {
+        Task task = taskMapper.mapToTask(taskDto);
+        Task savedTask = service.saveTask(task);
+        return ResponseEntity.ok(taskMapper.mapToTaskDto(savedTask));
     }
 
-    @PostMapping(value = "{taskId}")
-    public void createTask(TaskDto taskDto) {
-       new TaskDto(1L, "new title", "new_content");
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createTask(@RequestBody TaskDto taskDto) {
+        Task task = taskMapper.mapToTask(taskDto);
+        service.saveTask(task);
+        return ResponseEntity.ok().build();
     }
 }
