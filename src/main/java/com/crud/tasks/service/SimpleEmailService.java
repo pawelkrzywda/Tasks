@@ -1,5 +1,6 @@
 package com.crud.tasks.service;
 
+import com.crud.tasks.config.AdminConfig;
 import com.crud.tasks.domain.Mail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,8 @@ public class SimpleEmailService {
     private MailCreatorService mailCreatorService;
     private final JavaMailSender javaMailSender;
 
+    private AdminConfig adminConfig;
+
     public void send(final Mail mail) {
         log.info("Starting email preparation...");
         try {
@@ -31,10 +34,10 @@ public class SimpleEmailService {
     }
 
     @Scheduled(cron = "0 0 10 * * *")
-    public void sendDailyStats(final Mail mail) {
+    public void sendDailyStats() {
         log.info("Starting email preparation...");
         try {
-            javaMailSender.send(createDailyStats(mail));
+            javaMailSender.send(createDailyStats());
             log.info("Email has been sent.");
         } catch (MailException e) {
             log.error("Failed to process email sending: " + e.getMessage(), e);
@@ -50,12 +53,12 @@ public class SimpleEmailService {
         };
     }
 
-    private MimeMessagePreparator createDailyStats(final Mail mail) {
+    private MimeMessagePreparator createDailyStats() {
         return mimeMessage -> {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage);
-            messageHelper.setTo(mail.getMailTo());
-            messageHelper.setSubject(mail.getSubject());
-            messageHelper.setText(mailCreatorService.buildDatabaseDailyStatsEmail(mail.getMessage()), true);
+            messageHelper.setTo(adminConfig.getAdminMail());
+            messageHelper.setSubject("Daily Statistics");
+            messageHelper.setText(mailCreatorService.buildDatabaseDailyStatsEmail(), true);
         };
     }
 }

@@ -47,11 +47,10 @@ public class MailCreatorService {
         return templateEngine.process("mail/created-trello-card-mail", context);
     }
 
-    public String buildDatabaseDailyStatsEmail(String message) {
+    public String buildDatabaseDailyStatsEmail() {
         List<Task> tasks = dbService.getAllTasks();
 
         Context context = new Context();
-        context.setVariable("message", message);
         context.setVariable("tasks_url", "http://pawelkrzywda.github.io");
         context.setVariable("button", "Visit website");
         context.setVariable("admin_name", adminConfig.getAdminName());
